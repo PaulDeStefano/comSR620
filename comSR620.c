@@ -147,6 +147,11 @@ int main() {
 
             *cBufPtr = cGetData;
             cBufPtr++;
+            if (cBufPtr>=sBuffer+sizeof(sBuffer))                                          
+              {
+              fprintf(stderr,"Answer exeeds bounds.\n\n");                        
+              return 0;                                                           
+              }                                                                   
 
             if ( ( cGetData == '\n' ) || ( cGetData == '\0' ) ) {
 
