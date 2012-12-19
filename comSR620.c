@@ -32,8 +32,6 @@ int main() {
     char  sDataPath_old[ 256 ],
           sDataPath_now[ 256 ];
 
-    sprintf( sDataPath_now, "test.log" );
-
     FILE    *fWriteData;
     time_t      timeNow;
 
@@ -74,8 +72,6 @@ int main() {
         sd_hook();
     } 
 
-    /* open file for recording data */
-    fWriteData = fopen( sDataPath_now, "aw" );
 
   /************************************************************/
   /*     SR620 パラメータ設定 （設定値の反映確認は省略）      */
@@ -161,7 +157,7 @@ int main() {
 
                 time( &timeNow );
                 stTm = gmtime( &timeNow );
-/*
+
                 sprintf( sDataPath_now, "%s%d%02d%02d.dat"
                                       , DATA_DIR, ( stTm->tm_year + 1900 ), ( stTm->tm_mon + 1 ), stTm->tm_mday );
                 if ( strcmp( sDataPath_now, sDataPath_old ) != 0 ) {
@@ -171,7 +167,7 @@ int main() {
                     fWriteData = fopen( sDataPath_now, "aw" );
                     strcpy( sDataPath_old, sDataPath_now );
                 }
-*/
+
                 fprintf( fWriteData, "%d/%02d/%02d,%02d:%02d:%02d,%12.12lf\n"
                                    , ( stTm->tm_year + 1900 ), ( stTm->tm_mon + 1 ), stTm->tm_mday
                                    , stTm->tm_hour, stTm->tm_min, stTm->tm_sec, atof( sBuffer ) );
