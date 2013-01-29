@@ -32,7 +32,7 @@ int main() {
     char  sDataPath_old[ 256 ],
           sDataPath_now[ 256 ];
 
-    FILE    *fWriteData;
+    FILE    *fWriteData = NULL;
     time_t      timeNow;
 
     struct  tm         *stTm;
