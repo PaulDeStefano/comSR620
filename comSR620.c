@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termio.h>
+// #include <termio.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/file.h>
