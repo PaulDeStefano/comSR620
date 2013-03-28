@@ -137,7 +137,10 @@ int main() {
 
         while ( 1 ) {
 
+            // read results
             iGetCount = read( iSerialFD, &cGetData, 1 );
+            // get timestamp
+            time( &timeNow );
             if ( iGetCount < 0 ) {
                 perror( "[Error] read failed..." );
                 sd_hook();
@@ -157,7 +160,6 @@ int main() {
 
                 *cBufPtr = '\0';
 
-                time( &timeNow );
                 stTm = gmtime( &timeNow );
 
                 sprintf( sDataPath_now, "%s%d%02d%02d.dat"
