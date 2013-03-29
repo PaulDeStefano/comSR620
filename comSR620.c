@@ -176,9 +176,10 @@ int main() {
                     strcpy( sDataPath_old, sDataPath_now );
                 }
 
-                fprintf( fWriteData, "%d/%02d/%02d,%02d:%02d:%02d,%12.12lf\n"
+                fprintf( fWriteData, "%d/%02d/%02d,%02d:%02d:%02d,%12.12lf,%i\n"
                                    , ( stTm->tm_year + 1900 ), ( stTm->tm_mon + 1 ), stTm->tm_mday
-                                   , stTm->tm_hour, stTm->tm_min, stTm->tm_sec, atof( sBuffer ) );
+                                   , stTm->tm_hour, stTm->tm_min, stTm->tm_sec, atof( sBuffer )
+                                   , (int)timeNow );
                 fflush( fWriteData );
 
                 break;
