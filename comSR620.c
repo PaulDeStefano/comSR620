@@ -8,6 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/file.h>
+#include <stdint.h>
 
 
 
@@ -176,10 +177,10 @@ int main() {
                     strcpy( sDataPath_old, sDataPath_now );
                 }
 
-                fprintf( fWriteData, "%d/%02d/%02d,%02d:%02d:%02d,%12.12lf,%i\n"
+                fprintf( fWriteData, "%d/%02d/%02d,%02d:%02d:%02d,%12.12lf,%ju\n"
                                    , ( stTm->tm_year + 1900 ), ( stTm->tm_mon + 1 ), stTm->tm_mday
                                    , stTm->tm_hour, stTm->tm_min, stTm->tm_sec, atof( sBuffer )
-                                   , (int)timeNow );
+                                   , (uintmax_t)timeNow );
                 fflush( fWriteData );
 
                 break;
