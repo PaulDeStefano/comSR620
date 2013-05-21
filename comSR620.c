@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <termio.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <time.h>
@@ -29,7 +28,8 @@ char    sBuffer[ 256 ];
 int main() {
 
     int         iStatus,
-              iGetCount;
+              iGetCount,
+                 retVal;
     char       cGetData,
                *cBufPtr;
     char  sDataPath_old[ 256 ],
@@ -37,9 +37,11 @@ int main() {
 
     FILE    *fWriteData = NULL;
     time_t      timeNow;
+    long        nanosec;
 
     struct  tm         *stTm;
     struct  termio  stTermio;
+    struct  timespec   stNow;
 
 
     memset( sDataPath_old, '\0', sizeof( sDataPath_old ) );
@@ -145,10 +147,15 @@ int main() {
             // read results
             iGetCount = read( iSerialFD, &cGetData, 1 );
             // get timestamp
-            time( &timeNow );
+            //time( &timeNow );
+            // get new timestamp
+            retVal = clock_gettime( CLOCK_REALTIME, &stNow );
             if ( iGetCount < 0 ) {
                 perror( "[Error] read failed..." );
                 sd_hook();
+            }
+            if ( retVal != 0 ) {
+                perror("[Error] clock_gettime() failed..." );
             }
 
             *cBufPtr = cGetData;
@@ -165,6 +172,10 @@ int main() {
 
                 *cBufPtr = '\0';
 
+                /* pull 'time_t' type (aka UNIXtime) from 'timespec' type variable 'stNow' */
+                timeNow = stNow.tv_sec ;
+                /* second part of struct 'timespec' contains nanosecond part */
+                nanosec = stNow.tv_nsec ;
                 stTm = gmtime( &timeNow );
 
                 sprintf( sDataPath_now, "%s%d%02d%02d.dat"
@@ -177,10 +188,14 @@ int main() {
                     strcpy( sDataPath_old, sDataPath_now );
                 }
 
-                fprintf( fWriteData, "%d/%02d/%02d,%02d:%02d:%02d,%12.12lf,%ju\n"
-                                   , ( stTm->tm_year + 1900 ), ( stTm->tm_mon + 1 ), stTm->tm_mday
-                                   , stTm->tm_hour, stTm->tm_min, stTm->tm_sec, atof( sBuffer )
-                                   , (uintmax_t)timeNow );
+                /* write data to log */
+                strftime(sBuffer, sizeof(sBuffer),"%Y-%m-%dT%H:%M:%S", stTm);
+                fprintf( fWriteData, "%s %12.12lf %ju %lu\n"
+                                   , sBuffer
+                                   , atof( sBuffer )
+                                   , (uintmax_t)timeNow
+                                   , nanosec
+                                       );
                 fflush( fWriteData );
 
                 break;
