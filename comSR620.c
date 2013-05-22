@@ -51,12 +51,16 @@ int main() {
     signal( SIGINT, sd_hook );
 
 
+    /* open serial port */
+    sprintf( sBuffer, "Opening serial device: %s\n", SERIAL_DEVICE );
+    printf(sBuffer);
     iSerialFD = open( SERIAL_DEVICE, O_RDWR );
     if ( iSerialFD < 0 ) {
         sprintf( sBuffer, "[Error] open of %s failed... ", SERIAL_DEVICE );
         perror( sBuffer );
         exit( 0 );
     }
+    printf("Opening serial device: success\n");
 
 
     iStatus = ioctl( iSerialFD, TCGETA, &stTermio );
@@ -77,7 +81,7 @@ int main() {
         perror( "[Error] ioctl (TCSETA) failed..." );
         sd_hook();
     } 
-
+    printf("Setting port I/O parameters: success\n");
 
   /************************************************************/
   /*     SR620 パラメータ設定 （設定値の反映確認は省略）      */
@@ -154,11 +158,11 @@ int main() {
 
             *cBufPtr = cGetData;
             cBufPtr++;
-            if (cBufPtr>=sBuffer+sizeof(sBuffer))                                          
+            if (cBufPtr>=sBuffer+sizeof(sBuffer))
               {
-              fprintf(stderr,"Answer exeeds bounds.\n\n");                        
-              return 0;                                                           
-              }                                                                   
+              fprintf(stderr,"Answer exeeds bounds.\n\n");
+              return 0;
+              }
 
             if ( ( cGetData == '\n' ) || ( cGetData == '\0' ) ) {
                 // get timestamp
@@ -179,6 +183,7 @@ int main() {
                 nanosec = stNow.tv_nsec ;
                 stTm = gmtime( &timeNow );
 
+                /* Pick log file */
                 sprintf( sDataPath_now, "%s%d%02d%02d.dat"
                                       , DATA_DIR, ( stTm->tm_year + 1900 ), ( stTm->tm_mon + 1 ), stTm->tm_mday );
                 if ( strcmp( sDataPath_now, sDataPath_old ) != 0 ) {
