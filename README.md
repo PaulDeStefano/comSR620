@@ -7,7 +7,9 @@ measurements.
 Instructions
 ------------
 
-make
-mkdir TicData
-./sr620
+Edit line 15 of `comSR620.c`.  Set the defined variable `SERIAL_DEVICE` to the
+appropriate serial port.
 
+1. `make`  
+1. `mkdir TicData`  
+1. `./sr620`  
