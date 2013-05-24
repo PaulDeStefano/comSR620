@@ -22,6 +22,7 @@ void sd_hook();
 
 int   iSerialFD        =  -1;
 char    sBuffer[ 256 ];
+char   sISO8601[ 256 ];
 
 
 
@@ -146,16 +147,9 @@ int main() {
 
             // read results
             iGetCount = read( iSerialFD, &cGetData, 1 );
-            // get timestamp
-            //time( &timeNow );
-            // get new timestamp
-            retVal = clock_gettime( CLOCK_REALTIME, &stNow );
             if ( iGetCount < 0 ) {
                 perror( "[Error] read failed..." );
                 sd_hook();
-            }
-            if ( retVal != 0 ) {
-                perror("[Error] clock_gettime() failed..." );
             }
 
             *cBufPtr = cGetData;
@@ -167,6 +161,13 @@ int main() {
               }                                                                   
 
             if ( ( cGetData == '\n' ) || ( cGetData == '\0' ) ) {
+                // get timestamp
+                //time( &timeNow );
+                // get new timestamp
+                retVal = clock_gettime( CLOCK_REALTIME, &stNow );
+                if ( retVal != 0 ) {
+                    perror("[Error] clock_gettime() failed..." );
+                }
 
                 tcflush( iSerialFD, TCIFLUSH );
 
@@ -189,9 +190,9 @@ int main() {
                 }
 
                 /* write data to log */
-                strftime(sBuffer, sizeof(sBuffer),"%Y-%m-%dT%H:%M:%S", stTm);
+                strftime(sISO8601, sizeof(sISO8601),"%Y-%m-%dT%H:%M:%S", stTm);
                 fprintf( fWriteData, "%s %12.12lf %ju %lu\n"
-                                   , sBuffer
+                                   , sISO8601
                                    , atof( sBuffer )
                                    , (uintmax_t)timeNow
                                    , nanosec
