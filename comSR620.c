@@ -13,28 +13,32 @@
 
 #define  DATA_DIR       "./TicData/"        // データ保存ディレクトリの指定
 #define  SERIAL_DEVICE  "/dev/ttyS0"        // シリアル・デバイス・パスの指定
+#define  C_ARRAYSIZE    256
+#define  DEF_TIMEBASE   256
 
 
 
 void sd_hook();
-
+void parseOpts(int argc, char * const argv[], char *tty);
 
 
 int   iSerialFD        =  -1;
 char    sBuffer[ 256 ];
-char   sISO8601[ 256 ];
+char   sISO8601[ C_ARRAYSIZE ];
 
 
-
-int main() {
+int
+main(int argc, char **argv) {
 
     int         iStatus,
               iGetCount,
-                 retVal;
+                 retVal; // error checking
     char       cGetData,
-               *cBufPtr;
+               *cBufPtr,
+               *cBufPtr2;
     char  sDataPath_old[ 256 ],
-          sDataPath_now[ 256 ];
+          sDataPath_now[ 256 ],
+                    tty[ C_ARRAYSIZE ];
 
     FILE    *fWriteData = NULL;
     time_t      timeNow;
@@ -46,17 +50,24 @@ int main() {
 
 
     memset( sDataPath_old, '\0', sizeof( sDataPath_old ) );
-
+    memset( tty, '\0', sizeof tty  );
 
     signal( SIGINT, sd_hook );
 
+    cBufPtr2 = tty;
+    parseOpts(argc,argv,cBufPtr2);
+    if ( 0 == strcmp(tty,"") ) {
+        /* no tty specified */
+        strncpy(tty,SERIAL_DEVICE,sizeof tty ) ;
+        printf("[Notice] Serial device not specified, using default: %s\n",tty);
+    }
 
     /* open serial port */
-    sprintf( sBuffer, "Opening serial device: %s\n", SERIAL_DEVICE );
+    sprintf( sBuffer, "Opening serial device: %s\n", tty );
     printf(sBuffer);
     iSerialFD = open( SERIAL_DEVICE, O_RDWR );
     if ( iSerialFD < 0 ) {
-        sprintf( sBuffer, "[Error] open of %s failed... ", SERIAL_DEVICE );
+        sprintf( sBuffer, "[Error] open of %s failed... ", tty );
         perror( sBuffer );
         exit( 0 );
     }
@@ -165,9 +176,7 @@ int main() {
               }
 
             if ( ( cGetData == '\n' ) || ( cGetData == '\0' ) ) {
-                // get timestamp
-                //time( &timeNow );
-                // get new timestamp
+                /* get new timestamp */
                 retVal = clock_gettime( CLOCK_REALTIME, &stNow );
                 if ( retVal != 0 ) {
                     perror("[Error] clock_gettime() failed..." );
@@ -178,6 +187,7 @@ int main() {
                 *cBufPtr = '\0';
 
                 /* pull 'time_t' type (aka UNIXtime) from 'timespec' type variable 'stNow' */
+                retVal = clock_gettime( CLOCK_REALTIME, &stNow );
                 timeNow = stNow.tv_sec ;
                 /* second part of struct 'timespec' contains nanosecond part */
                 nanosec = stNow.tv_nsec ;
@@ -233,4 +243,23 @@ void sd_hook()
 }
 
 
-
+void parseOpts(int argc, char * const argv[], char *tty) {
+    /* parse command line options */
+    int         opt;
+    while ((opt = getopt(argc, argv, "d:")) != -1) {
+        switch (opt) {
+        case 'd':
+            if ( C_ARRAYSIZE <= strlen(optarg)) {
+                fprintf(stderr,"[Error] string entry for option -d too long\n");
+                exit(EXIT_FAILURE);
+            } else {
+                strncpy(tty,optarg,C_ARRAYSIZE);
+            }
+            break;
+        default: /* '?' */
+            fprintf(stderr, "Usage %s -d /dev/<serial device>\n",
+                    argv[0]);
+            exit(EXIT_FAILURE);
+        }
+    }
+}
