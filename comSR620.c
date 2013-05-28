@@ -87,8 +87,8 @@ int main() {
     strcpy( sBuffer, "*RST;*CLS\n" );
     write( iSerialFD, sBuffer, strlen( sBuffer ) );
 
-    /* timebase = external */
-    strcpy( sBuffer, "CLCK1\n" );
+    /* timebase = internal */
+    strcpy( sBuffer, "CLCK0\n" );
     write( iSerialFD, sBuffer, strlen( sBuffer ) );
 
     /* mode = time */
