@@ -1,7 +1,7 @@
 all: sr620
 
 sr620: comSR620.c
-	gcc -Wall -lrt comSR620.c -o sr620
+	gcc -Wall -o sr620 comSR620.c -lrt
 
 clean:
 	rm -f sr620
