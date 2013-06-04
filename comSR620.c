@@ -191,7 +191,7 @@ int main() {
 
                 /* write data to log */
                 strftime(sISO8601, sizeof(sISO8601),"%Y-%m-%dT%H:%M:%S", stTm);
-                fprintf( fWriteData, "%s %12.12lf %ju %lu\n"
+                fprintf( fWriteData, "%s %12.12lf %ju %09li\n"
                                    , sISO8601
                                    , atof( sBuffer )
                                    , (uintmax_t)timeNow
