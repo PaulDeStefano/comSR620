@@ -27,12 +27,13 @@ public:
     sr620args():device_name(SERIAL_DEVICE), data_path(DATA_DIR)
     {
 	valid_tics.push_back("TravTIC");
-	valid_tics.push_back("NictTIC");
-	valid_tics.push_back("LsuTIC");
-	valid_tics.push_back("SkTIC");
+	valid_tics.push_back("NICTTIC");
+	valid_tics.push_back("LSUTIC");
 
 	valid_locations.push_back("NU1");
 	valid_locations.push_back("SK");
+	valid_locations.push_back("RnHut");
+	valid_locations.push_back("Kenkyuto");
 	valid_locations.push_back("ND280");
 	valid_locations.push_back("OTHER");
         
