@@ -428,6 +428,9 @@ int main(int argc,char* argv[]) {
     /* mode = time */
     writeLine(iSerialFD,  "MODE0\n" );
 
+    /* arming mode = +time (not +/- time) */
+    writeLine(iSerialFD,  "ARMM1\n" );
+
     /* display = mean */
     writeLine(iSerialFD,  "DISP0\n" );
 
