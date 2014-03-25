@@ -110,6 +110,10 @@ main(int argc, char **argv) {
     strcpy( sBuffer, "MODE0\n" );
     write( iSerialFD, sBuffer, strlen( sBuffer ) );
 
+    /* trigger mode = +time (not +/- time) */
+    strcpy( sBuffer, "ARMM1\n" );
+    write( iSerialFD, sBuffer, strlen( sBuffer ) );
+
     /* display = mean */
     strcpy( sBuffer, "DISP0\n" );
     write( iSerialFD, sBuffer, strlen( sBuffer ) );
