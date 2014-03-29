@@ -375,7 +375,7 @@ int main(int argc,char* argv[]) {
     iStatus = ioctl( iSerialFD, TCGETA, &stTermio );
     if ( iStatus < 0 ) {
         perror( "[Error] ioctl (TCGETA) failed...");
-        sd_hook(0);
+        exit(1);
     }
 
     stTermio.c_cflag |=  B9600;
@@ -388,7 +388,7 @@ int main(int argc,char* argv[]) {
     iStatus = ioctl( iSerialFD, TCSETA, &stTermio );
     if ( iStatus < 0 ) {
         perror( "[Error] ioctl (TCSETA) failed..." );
-        sd_hook(0);
+        exit(1);
     } 
 
     // check if we are really talking to TIC......
@@ -396,7 +396,7 @@ int main(int argc,char* argv[]) {
     writeLine(iSerialFD, "*IDN?\n" );
     
     if (readLine(iSerialFD,output))
-        sd_hook(0);
+        exit(1);
     
     std::transform(output.begin(),output.end(),output.begin(),::toupper);
     
@@ -405,7 +405,7 @@ int main(int argc,char* argv[]) {
             std::cout << "This is not a SR620 TIC!" << std::endl;
         else
             std::cerr << "[Error] This is not a SR620 TIC!" << std::endl;
-        sd_hook(0);
+        exit(1);
     }
     else
     {
@@ -413,7 +413,7 @@ int main(int argc,char* argv[]) {
     }
     
     if (args.query_only)
-        sd_hook(0);
+        exit(0);
 
   /************************************************************/
   /*     SR620 �p�����[�^�ݒ� �i�ݒ�l�̔��f�m�F�͏ȗ��j      */
@@ -496,7 +496,8 @@ int main(int argc,char* argv[]) {
 void sd_hook(int signal)
 {
     if ( iSerialFD != -1 ) {
-        writeLine(iSerialFD, "LOCL0\n" );
+	/* discontinue automeasure, STOP current measurement, clear, return control to front pannel */
+        writeLine( iSerialFD, "AUTM0;STOP;*CLS;LOCL0\n" );
         close( iSerialFD );
     }
     
