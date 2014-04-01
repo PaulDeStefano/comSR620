@@ -468,7 +468,7 @@ int main(int argc,char* argv[]) {
 
     while ( 1 ) {
 
-	if (tmNow.tvsec / 60  > recal_minutes * cal_counter)
+	if (tmNow.tv_sec / 60  > recal_minutes * cal_counter)
 	{
 		cal_counter++;
 	        writeLine( iSerialFD, "AUTM0;STOP;*CLS;LOCL0\n" );
