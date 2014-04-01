@@ -348,6 +348,9 @@ int main(int argc,char* argv[]) {
     std::string         lastFilename;
     int                 iStatus;
 
+	int cal_counter = 0;
+	int recal_minutes = 1;
+
     struct timespec     tmNow;
 
     struct  termio      stTermio;
@@ -464,6 +467,15 @@ int main(int argc,char* argv[]) {
 
 
     while ( 1 ) {
+
+	if (tmNow.tvsec / 60  > recal_minutes * cal_counter)
+	{
+		cal_counter++;
+	        writeLine( iSerialFD, "AUTM0;STOP;*CLS;LOCL0\n" );
+		writeLine( iSerialFD, "*CAL?\n");
+		readLine(iSerialFD, output);
+		std::cout << "Recalibration complete, output: " << output << std::endl;
+	}
 
         writeLine(iSerialFD,  "*WAI;XAVG?\n" );
         readLine(iSerialFD, output);
