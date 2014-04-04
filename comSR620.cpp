@@ -337,6 +337,49 @@ std::string timeToStr(struct timespec &tmNow)
     return std::string(sISO8601);
 }
 
+void sndStartCmds(int iSerialFD) {
+/* initialize measurement */
+
+    /* reset + clear screen */ 
+    writeLine(iSerialFD,  "*RST;*CLS\n" );
+
+    /* timebase = internal */
+    writeLine(iSerialFD,  "CLCK0\n" );
+
+    /* mode = time */
+    writeLine(iSerialFD,  "MODE0\n" );
+
+    /* arming mode = +time (not +/- time) */
+    writeLine(iSerialFD,  "ARMM1\n" );
+
+    /* display = mean */
+    writeLine(iSerialFD,  "DISP0\n" );
+
+    /* Set the measurement source...  [ 0:A , 1:B ] */
+    writeLine(iSerialFD,  "SRCE0\n" );
+
+    /* Set the number of samples... */
+    writeLine(iSerialFD,  "SIZE1\n" );
+
+    /* Set the trigger slope...  [ 0:positive , 1:negative ] */
+    writeLine(iSerialFD,  "TSLP1,0;TSLP2,0\n" );
+
+    /* Set the trigger level... */
+    writeLine(iSerialFD,  "LEVL1,1.2;LEVL2,1.2\n" );
+
+    /* Set the trigger ac/dc coupling...  [ 0:DC , 1:AC ] */
+    writeLine(iSerialFD,  "TCPL1,0;TCPL2,0\n" );
+
+    /* Set the trigger impedance...  [ 0:50ohm , 1:1meg ] */
+    writeLine(iSerialFD,  "TERM1,0;TERM2,0\n" );
+
+    /* local/remote = remote */
+    writeLine(iSerialFD,  "LOCL1\n" );
+
+    /* auto measure */
+    writeLine(iSerialFD,  "AUTM1\n" );
+}
+
 void sd_hook(int signal);
 
 int   iSerialFD        =  -1;
@@ -348,10 +391,11 @@ int main(int argc,char* argv[]) {
     std::string         lastFilename;
     int                 iStatus;
 
-	int cal_counter = 0;
-	int recal_minutes = 1;
+    int cal_counter = 0; //counts number of calibrations
+    int recal_minutes = 10 ;  //interval between calibrations (min)
 
     struct timespec     tmNow;
+    struct timespec     startTime;
 
     struct  termio      stTermio;
     
@@ -418,65 +462,35 @@ int main(int argc,char* argv[]) {
     if (args.query_only)
         exit(0);
 
-  /************************************************************/
-  /*     SR620 �p�����[�^�ݒ� �i�ݒ�l�̔��f�m�F�͏ȗ��j      */
-  /*                                                          */
+    sndStartCmds(iSerialFD) ; 
 
-    /* ���Z�b�g */
-    writeLine(iSerialFD,  "*RST;*CLS\n" );
-
-    /* timebase = internal */
-    writeLine(iSerialFD,  "CLCK0\n" );
-
-    /* mode = time */
-    writeLine(iSerialFD,  "MODE0\n" );
-
-    /* arming mode = +time (not +/- time) */
-    writeLine(iSerialFD,  "ARMM1\n" );
-
-    /* display = mean */
-    writeLine(iSerialFD,  "DISP0\n" );
-
-    /* Set the measurement source...  [ 0:A , 1:B ] */
-    writeLine(iSerialFD,  "SRCE0\n" );
-
-    /* Set the number of samples... */
-    writeLine(iSerialFD,  "SIZE1\n" );
-
-    /* Set the trigger slope...  [ 0:positive , 1:negative ] */
-    writeLine(iSerialFD,  "TSLP1,0;TSLP2,0\n" );
-
-    /* Set the trigger level... */
-    writeLine(iSerialFD,  "LEVL1,1.2;LEVL2,1.2\n" );
-
-    /* Set the trigger ac/dc coupling...  [ 0:DC , 1:AC ] */
-    writeLine(iSerialFD,  "TCPL1,0;TCPL2,0\n" );
-
-    /* Set the trigger impedance...  [ 0:50ohm , 1:1meg ] */
-    writeLine(iSerialFD,  "TERM1,0;TERM2,0\n" );
-
-    /* local/remote = remote */
-    writeLine(iSerialFD,  "LOCL1\n" );
-
-    /* auto measure */
-    writeLine(iSerialFD,  "AUTM1\n" );
-
-  /*                                                          */
-  /*     SR620 �p�����[�^�ݒ� �i�ݒ�l�̔��f�m�F�͏ȗ��j      */
-  /************************************************************/
-
+    /* use needRotate to prime this value */
+    args.needRotate( & tmNow );
+    memcpy(&startTime,&tmNow,sizeof(struct timespec));
 
     while ( 1 ) {
 
-	if (tmNow.tv_sec / 60  > recal_minutes * cal_counter)
+        /* check to see if elapsed time exceeds interval*calibrations done so far */
+	if ( (tmNow.tv_sec - startTime.tv_sec) / 60  > recal_minutes * cal_counter)
 	{
 		cal_counter++;
+		std::cout << "Auto-calibration starting..." << std::endl;
+                /*  DEBUG */
+		//std::cout << "DEBUG:" << (tmNow.tv_sec - startTime.tv_sec) / 60  << std::endl;
+                /*  stop current measurement */
 	        writeLine( iSerialFD, "AUTM0;STOP;*CLS;LOCL0\n" );
+                /*  DEBUG */
+                //if ( cal_counter >= 2 ) { exit(1) ;}
+                /*  do auto-calibration */
 		writeLine( iSerialFD, "*CAL?\n");
 		readLine(iSerialFD, output);
-		std::cout << "Recalibration complete, output: " << output << std::endl;
+		std::cout << "Auto-calibration complete, result code: " << output << std::endl;
+                /*  restart measurements */
+                sndStartCmds(iSerialFD);
 	}
 
+	//std::cout << "DEBUG: Recalibration skipped, not time." << std::endl;
+	//std::cout << "DEBUG:" << (tmNow.tv_sec - startTime.tv_sec) / 60  << std::endl;
         writeLine(iSerialFD,  "*WAI;XAVG?\n" );
         readLine(iSerialFD, output);
         
