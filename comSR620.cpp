@@ -392,7 +392,7 @@ int main(int argc,char* argv[]) {
     int                 iStatus;
 
     int cal_counter = 0; //counts number of calibrations
-    int recal_minutes = 10 ;  //interval between calibrations (min)
+    int recal_minutes = 1000 *60 ;  //interval between calibrations (min)
 
     struct timespec     tmNow;
     struct timespec     startTime;
@@ -471,14 +471,14 @@ int main(int argc,char* argv[]) {
     while ( 1 ) {
 
         /* check to see if elapsed time exceeds interval*calibrations done so far */
-	if ( (tmNow.tv_sec - startTime.tv_sec) / 60  > recal_minutes * cal_counter)
+	if ( (tmNow.tv_sec - startTime.tv_sec) / 60 / recal_minutes  > cal_counter)
 	{
 		cal_counter++;
 		std::cout << "Auto-calibration starting..." << std::endl;
                 /*  DEBUG */
 		//std::cout << "DEBUG:" << (tmNow.tv_sec - startTime.tv_sec) / 60  << std::endl;
                 /*  stop current measurement */
-	        writeLine( iSerialFD, "AUTM0;STOP;*CLS;LOCL0\n" );
+	        writeLine( iSerialFD, "AUTM0;STOP;*CLS\n" );
                 /*  DEBUG */
                 //if ( cal_counter >= 2 ) { exit(1) ;}
                 /*  do auto-calibration */
