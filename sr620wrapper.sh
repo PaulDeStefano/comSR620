@@ -2,7 +2,7 @@
 
 arguments=$@
 sr620path="/DATA/LSU_TIC/"
-defaultDev=/dev/ttyUSB0 # LSU-TIC is on ttyUSB0 on gpsptnu1 & sukrnh5/skgpspt
+defaultDev=/dev/ttyUSB0
 
 PID=$(pgrep sr620)
 
@@ -29,8 +29,8 @@ then
 	exit 1
     else
 	cd $sr620path
-	#screen -d -m -S sr620screen ./sr620 -d "${defaultDev}" -l NU1 -a OT -b PT_Sept -t LSUTIC --rotate
-	screen -d -m -S sr620screen bash -c "./sr620 -d ${defaultDev} -l Kenkyuto -a OT -b PT_Sept -t LSUTIC --rotate 2>&1 | tee -a sr620.log"
+	screen -d -m -S sr620screen bash -c "./sr620 -d ${defaultDev} -l NU1 -a OT -b PT_Sept -t LSUTIC --rotate | tee -a sr620.log"
+	#screen -d -m -S sr620screen ./sr620 -d "${defaultDev}" -l Kenkyuto -a OT -b PT_Sept -t LSUTIC --rotate | tee -a "sr620.log"
 	exit $?
     fi
 fi
