@@ -4,7 +4,7 @@ export LD_LIBRARY_PATH:=/usr/local/gcc/lib
 all: sr620
 
 sr620: comSR620.cpp
-	g++ -Wall -o sr620 comSR620.cpp -lrt
+	g++ -I$(LD_LIBRARY_PATH) -g -Wall -o sr620 comSR620.cpp -lrt
 
 clean:
 	rm -f sr620
