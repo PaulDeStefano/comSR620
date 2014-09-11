@@ -361,8 +361,8 @@ void sndStartCmds(int iSerialFD) {
     /* reset + clear screen */ 
     writeLine(iSerialFD,  "*RST;*CLS\n" );
 
-    /* timebase = internal */
-    writeLine(iSerialFD,  "CLCK0\n" );
+    /* timebase = external */
+    writeLine(iSerialFD,  "CLCK1\n" );
 
     /* mode = time */
     writeLine(iSerialFD,  "MODE0\n" );
