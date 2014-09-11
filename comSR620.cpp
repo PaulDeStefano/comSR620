@@ -41,6 +41,8 @@ public:
         last_day_number=-1;
         daily_rotate=0;
         verbose=0;
+        calibrate=0;
+        debug=0;
     }
 // convenience lists
     std::vector<std::string> valid_tics;
@@ -59,6 +61,8 @@ public:
     int query_only;
     int daily_rotate;
     int verbose;
+    int calibrate;
+    int debug;
     
     int needRotate(struct timespec *tm=NULL){
         struct timespec stNow;
@@ -156,6 +160,18 @@ public:
              if (parseOption(argc,argv,p_arg,"-v","--verbose",0,value)==1)
             {
                 verbose=1;
+                p_arg++;
+                continue;
+            }
+             if (parseOption(argc,argv,p_arg,"-C","--calibrate",0,value)==1)
+            {
+                calibrate=1;
+                p_arg++;
+                continue;
+            }
+             if (parseOption(argc,argv,p_arg,"-D","--debug",0,value)==1)
+            {
+                debug=1;
                 p_arg++;
                 continue;
             }
@@ -296,6 +312,8 @@ public:
         std::cout << "-q, --query - query the tic \n";
         std::cout << "-r, --rotate - enable daily file rotation\n";
         std::cout << "-v, --verbose - print data to standard output too\n";
+        std::cout << "-C, --calibrate - perform TIC auto-calibration at start\n";
+        std::cout << "-D, --debug - enable extra debugging messages\n";
         std::cout << std::endl;
     }
     
@@ -529,6 +547,4 @@ void sd_hook(int signal)
     
     exit( 0 );
 }
-
-
 
