@@ -399,6 +399,7 @@ void sndStartCmds(int iSerialFD) {
 }
 
 void sd_hook(int signal);
+void runCalibration(void);
 
 int   iSerialFD        =  -1;
 
@@ -480,6 +481,10 @@ int main(int argc,char* argv[]) {
     if (args.query_only)
         exit(0);
 
+    writeLine( iSerialFD, "ENDT 10\n" );
+    if ( args.calibrate )
+        runCalibration();
+
     sndStartCmds(iSerialFD) ; 
 
     /* use needRotate to prime this value */
@@ -492,17 +497,7 @@ int main(int argc,char* argv[]) {
 	if ( (tmNow.tv_sec - startTime.tv_sec) / 60 / recal_minutes  > cal_counter)
 	{
 		cal_counter++;
-		std::cout << "Auto-calibration starting..." << std::endl;
-                /*  DEBUG */
-		//std::cout << "DEBUG:" << (tmNow.tv_sec - startTime.tv_sec) / 60  << std::endl;
-                /*  stop current measurement */
-	        writeLine( iSerialFD, "AUTM0;STOP;*CLS\n" );
-                /*  DEBUG */
-                //if ( cal_counter >= 2 ) { exit(1) ;}
-                /*  do auto-calibration */
-		writeLine( iSerialFD, "*CAL?\n");
-		readLine(iSerialFD, output);
-		std::cout << "Auto-calibration complete, result code: " << output << std::endl;
+                runCalibration();
                 /*  restart measurements */
                 sndStartCmds(iSerialFD);
 	}
@@ -535,7 +530,20 @@ int main(int argc,char* argv[]) {
     }
 }
 
-
+void runCalibration(void) {
+    std::string         output;
+    std::cout << "Auto-calibration starting..." << std::endl;
+    /*  DEBUG */
+    //std::cout << "DEBUG:" << (tmNow.tv_sec - startTime.tv_sec) / 60  << std::endl;
+    /*  stop current measurement */
+    writeLine( iSerialFD, "AUTM0;STOP;*CLS\n" );
+    /*  DEBUG */
+    //if ( cal_counter >= 2 ) { exit(1) ;}
+    /*  do auto-calibration */
+    writeLine( iSerialFD, "*CAL?\n");
+    readLine(iSerialFD, output);
+    std::cout << "Auto-calibration complete, result code: " << output << std::endl;
+}
 
 void sd_hook(int signal)
 {
