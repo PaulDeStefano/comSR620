@@ -330,6 +330,11 @@ int readLine(int fd, std::string &output)
             perror( "[Error] read failed..." );
             return 1;
         }
+    	//std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
+        if ( c == 0xD ) {
+    	    //std::cerr << "DEBUG: found carriage return char" << std::endl ;
+	    continue;
+        }
         if ( ( c == '\n' ) || ( c == '\0' ) ) {
                 tcflush( fd, TCIFLUSH );
                 return 0;
@@ -357,6 +362,10 @@ std::string timeToStr(struct timespec &tmNow)
 
 void sndStartCmds(int iSerialFD) {
 /* initialize measurement */
+
+    /* set transmition terminator to ASCII char #10 (\n,linefeed) (default: ENDT w/o parameters, yields <cr><lf>) */ 
+    //writeLine(iSerialFD,  "ENDT\n" );
+    writeLine(iSerialFD,  "ENDT 10\n" );
 
     /* reset + clear screen */ 
     writeLine(iSerialFD,  "*RST;*CLS\n" );
@@ -437,7 +446,6 @@ int main(int argc,char* argv[]) {
         exit( 1 );
     }
 
-
     iStatus = ioctl( iSerialFD, TCGETA, &stTermio );
     if ( iStatus < 0 ) {
         perror( "[Error] ioctl (TCGETA) failed...");
@@ -459,24 +467,24 @@ int main(int argc,char* argv[]) {
 
     // check if we are really talking to TIC......
     // not to reset all the equipment (like Cesium clock)
+    //tcflush( iSerialFD, TCIFLUSH );
     writeLine(iSerialFD, "*IDN?\n" );
-    
     if (readLine(iSerialFD,output))
         exit(1);
-    
+
+    if (args.debug) std::cerr << "DEBUG: reply from IDN?: *" << output << "*" << std::endl ;
     std::transform(output.begin(),output.end(),output.begin(),::toupper);
     
     if (output.find("SR620")==std::string::npos){
-        if (args.query_only)
-            std::cout << "This is not a SR620 TIC!" << std::endl;
-        else
-            std::cerr << "[Error] This is not a SR620 TIC!" << std::endl;
-        exit(1);
+	    if (args.query_only)
+	        std::cout << "This is not a SR620 TIC!" << std::endl;
+	    else {
+	        std::cerr << "[Error] This is not a SR620 TIC!" << std::endl;
+	        exit(1);
+            }
     }
     else
-    {
         std::cout << "TIC presence verified OK." <<std::endl;
-    }
     
     if (args.query_only)
         exit(0);
@@ -506,6 +514,7 @@ int main(int argc,char* argv[]) {
 	//std::cout << "DEBUG:" << (tmNow.tv_sec - startTime.tv_sec) / 60  << std::endl;
         writeLine(iSerialFD,  "*WAI;XAVG?\n" );
         readLine(iSerialFD, output);
+	if (args.debug) std::cerr << "DEBUG: output: *" << output << "*" << std::endl ;
         
         if (args.needRotate(&tmNow)) {
             if ( outputFile.is_open() ) {
@@ -521,6 +530,11 @@ int main(int argc,char* argv[]) {
                 outputFile.clear();
             }
         }
+
+	if ( output.size() <= 0 ) {
+            if (args.debug) std::cerr << "DEBUG:  read empty line from TIC, skipping" << std::endl;
+	    continue;
+	}
         
         std::ostringstream ofs;
         ofs << timeToStr(tmNow) << " " << std::fixed << std::setw(12) << std::setfill('0') << std::setprecision(12) << atof( output.c_str() ) << " " << (uintmax_t)tmNow.tv_sec << " " << tmNow.tv_nsec;
@@ -547,10 +561,18 @@ void runCalibration(void) {
 
 void sd_hook(int signal)
 {
+    //std::cerr << "DEBUG:  sd_hook called..." << std::endl;
     if ( iSerialFD != -1 ) {
 	/* discontinue automeasure, STOP current measurement, clear, return control to front pannel */
+    	//std::cerr << "DEBUG: trying to exit cleanly..." << std::endl;
+    	//writeLine(iSerialFD,  "ENDT\n" );
         writeLine( iSerialFD, "AUTM0;STOP;*CLS;LOCL0\n" );
+        tcflush( iSerialFD, TCIFLUSH );
         close( iSerialFD );
+    }
+    else
+    {
+    	//std::cerr << "DEBUG: cannot exit cleanly..." << std::endl;
     }
     
     exit( 0 );
