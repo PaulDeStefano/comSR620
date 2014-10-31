@@ -340,22 +340,22 @@ int clearLine(int fd)
         if (ready == 0) {
             //Timeout
             if (limit <= 0) {
-                    std::cerr << "DEBUG: clearLine: exceeded select timeout too many times" << std::endl ;
+                    //std::cerr << "DEBUG: clearLine: exceeded select timeout too many times" << std::endl ;
                     break;
             }
             limit--;
-            std::cerr << "DEBUG: clearLine: waiting to read" << std::endl ;
+            //std::cerr << "DEBUG: clearLine: waiting to read" << std::endl ;
             continue;
         }
         else if (ready == -1) {
             //critical error
-            std::cerr << "DEBUG: select() returned critical error" << std::endl ;
+            //std::cerr << "DEBUG: select() returned critical error" << std::endl ;
             break;
         } else {
                 c = '\0';
                 //usleep( (useconds_t) (1000*1000/20) );
                 iGetCount = read( fd, &c, 1 );
-                std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
+                //std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
                 if ( iGetCount < 0 ) {
                     perror( "[Error] read failed clearing line..." );
                     return 1;
@@ -364,7 +364,7 @@ int clearLine(int fd)
                 limit=10;
                 gotSomething=1;
                 if ( iGetCount == 0  ) {
-                    std::cerr << "DEBUG: couldn't read any more chars, line clear." << std::endl ;
+                    //std::cerr << "DEBUG: couldn't read any more chars, line clear." << std::endl ;
                     return 0;
                 }
         }
@@ -385,9 +385,9 @@ int readLine(int fd, std::string &output)
             perror( "[Error] read failed..." );
             return 1;
         }
-    	std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
+    	//std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
         if ( c == 0xD ) {
-    	    std::cerr << "DEBUG: found carriage return char" << std::endl ;
+    	    //std::cerr << "DEBUG: found carriage return char" << std::endl ;
 	    continue;
         }
         if ( ( c == '\n' ) || ( c == '\0' ) ) {
