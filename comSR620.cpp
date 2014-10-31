@@ -262,7 +262,7 @@ public:
 
             p_arg++;
         }
-        // valdate completness
+        // validate completeness
         if (query_only) return 0;
         if (override_name.empty())
         {
@@ -299,7 +299,7 @@ public:
         std::cout << " YYYYMMDDTHHMMSS.<location>.<channel-A>-<channel B>.<tic id>[.user_suffix].dat \n";
         std::cout << "Usage parameters: \n";
         std::cout << "-d, --device - specify device to open, defaults to:  "<< SERIAL_DEVICE <<" \n";
-        std::cout << "-p, --datapath - specify data path, deafults to: " << DATA_DIR << " \n";
+        std::cout << "-p, --datapath - specify data path, defaults to: " << DATA_DIR << " \n";
         std::cout << "-h, --help - print this help \n";
         std::cout << "-t, --tic - specify valid tic name (from list): ";
         std::copy(valid_tics.begin(),valid_tics.end(),std::ostream_iterator<std::string>(std::cout,", "));
@@ -340,7 +340,7 @@ int clearLine(int fd)
         if (ready == 0) {
             //Timeout
             if (limit <= 0) {
-                    std::cerr << "DEBUG: clearLine: exceeded slelect timeout too many times" << std::endl ;
+                    std::cerr << "DEBUG: clearLine: exceeded select timeout too many times" << std::endl ;
                     break;
             }
             limit--;
@@ -418,7 +418,7 @@ std::string timeToStr(struct timespec &tmNow)
 void sndStartCmds(int iSerialFD) {
 /* initialize measurement */
 
-    /* set transmition terminator to ASCII char #10 (\n,linefeed) (default: ENDT w/o parameters, yields <cr><lf>) */ 
+    /* set transmission terminator to ASCII char #10 (\n,linefeed) (default: ENDT w/o parameters, yields <cr><lf>) */ 
     //writeLine(iSerialFD,  "ENDT\n" );
     writeLine(iSerialFD,  "ENDT 10\n" );
 
@@ -544,7 +544,7 @@ int main(int argc,char* argv[]) {
 /* testing
  * give the device something to say to see if the following
  * code can correctly clean the line
-    if (args.debug) std::cerr << "DEBUG: preloading line with IND? repsonces..." << std::endl ;
+    if (args.debug) std::cerr << "DEBUG: pre-loading line with IND? responses..." << std::endl ;
     tcflush( iSerialFD, TCIFLUSH );
     writeLine(iSerialFD, "*IDN?\n" );
     writeLine(iSerialFD, "*IDN?\n" );
