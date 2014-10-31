@@ -4,10 +4,12 @@
 #include <string.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/file.h>
 #include <stdint.h>
+#include <fcntl.h>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -319,6 +321,59 @@ public:
     
 };
 
+int clearLine(int fd)
+{
+    timeval tv;
+    fd_set rd;
+    tv.tv_sec=0;
+    tv.tv_usec=100*1000;
+    FD_ZERO(&rd);
+    FD_SET(fd,&rd);
+    int ready;
+    int limit=10;
+    int gotSomething=0;
+
+    int iGetCount;
+    char c;
+    while ( 1 ) {
+        ready = select(FD_SETSIZE, &rd, NULL, NULL, &tv);
+        if (ready == 0) {
+            //Timeout
+            if (limit <= 0) {
+                    std::cerr << "DEBUG: clearLine: exceeded slelect timeout too many times" << std::endl ;
+                    break;
+            }
+            limit--;
+            std::cerr << "DEBUG: clearLine: waiting to read" << std::endl ;
+            continue;
+        }
+        else if (ready == -1) {
+            //critical error
+            std::cerr << "DEBUG: select() returned critical error" << std::endl ;
+            break;
+        } else {
+                c = '\0';
+                //usleep( (useconds_t) (1000*1000/20) );
+                iGetCount = read( fd, &c, 1 );
+                std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
+                if ( iGetCount < 0 ) {
+                    perror( "[Error] read failed clearing line..." );
+                    return 1;
+                    //continue;
+                }
+                limit=10;
+                gotSomething=1;
+                if ( iGetCount == 0  ) {
+                    std::cerr << "DEBUG: couldn't read any more chars, line clear." << std::endl ;
+                    return 0;
+                }
+        }
+    }
+    if (gotSomething)
+            return 0;
+    return 1;
+}
+
 int readLine(int fd, std::string &output)
 {
     int iGetCount;
@@ -330,9 +385,9 @@ int readLine(int fd, std::string &output)
             perror( "[Error] read failed..." );
             return 1;
         }
-    	//std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
+    	std::cerr << "DEBUG: char in hex: " << std::hex << static_cast<int>(c) << std::endl ;
         if ( c == 0xD ) {
-    	    //std::cerr << "DEBUG: found carriage return char" << std::endl ;
+    	    std::cerr << "DEBUG: found carriage return char" << std::endl ;
 	    continue;
         }
         if ( ( c == '\n' ) || ( c == '\0' ) ) {
@@ -425,6 +480,7 @@ int main(int argc,char* argv[]) {
     struct timespec     tmNow;
     struct timespec     startTime;
 
+    //struct  termios     stTermio;
     struct  termio      stTermio;
     
     if (args.parse_args(argc,argv)) return 1;
@@ -440,7 +496,8 @@ int main(int argc,char* argv[]) {
     signal( SIGTERM, sd_hook);
 
 
-    iSerialFD = open( args.device_name.c_str(), O_RDWR );
+    //OLD iSerialFD = open( args.device_name.c_str(), O_RDWR );
+    iSerialFD = open( args.device_name.c_str(), (O_RDWR | O_NOCTTY) );
     if ( iSerialFD < 0 ) {
         std::cerr << "[Error] open of " << args.device_name << " failed... :" << errno << std::endl;
         exit( 1 );
@@ -453,9 +510,28 @@ int main(int argc,char* argv[]) {
     }
 
     stTermio.c_cflag |=  B9600;
-    stTermio.c_lflag &= ~ECHO;
-    stTermio.c_lflag &= ~ICANON;
 
+    stTermio.c_cflag |=  (CLOCAL | CREAD);      // ensure prog don't become port owner
+    stTermio.c_cflag &=  ~PARENB ;              // No parity
+    stTermio.c_cflag |=  CSTOPB ;               // 2 stop bits
+    //stTermio.c_cflag &=  ~CSTOPB ;               // 1 stop bits
+    stTermio.c_cflag &=  ~CSIZE ;               // Mask char size bits
+    stTermio.c_cflag |=  CS8 ;                  // 8 data bits
+    stTermio.c_cflag &= ~HUPCL ;                // dont' send HUP on tty close
+
+    // local modes
+    stTermio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // "raw" input
+    //OLD stTermio.c_lflag &= ~ECHO;
+    //OLD stTermio.c_lflag &= ~ICANON;
+
+    // output modes
+    stTermio.c_oflag &= ~ONLCR ;                // don't translate NewLine chars to CarriageReturn chars
+    stTermio.c_oflag &= ~OPOST ;                // raw output
+
+    // input modes
+    stTermio.c_iflag |= IGNCR;               // ignore CR chars
+
+    // setup for use in clearLine()
     stTermio.c_cc[  VMIN ] = 1;
     stTermio.c_cc[ VTIME ] = 0;
 
@@ -465,9 +541,48 @@ int main(int argc,char* argv[]) {
         exit(1);
     } 
 
+/* testing
+ * give the device something to say to see if the following
+ * code can correctly clean the line
+    if (args.debug) std::cerr << "DEBUG: preloading line with IND? repsonces..." << std::endl ;
+    tcflush( iSerialFD, TCIFLUSH );
+    writeLine(iSerialFD, "*IDN?\n" );
+    writeLine(iSerialFD, "*IDN?\n" );
+    writeLine(iSerialFD, "*IDN?\n" );
+    writeLine(iSerialFD, "\n\n\n" );
+    if (args.debug) std::cerr << "DEBUG: ...done" << std::endl ;
+ */
+
+    // clear the line
+    if (args.debug) std::cerr << "DEBUG: trying to clear serial line..." << std::endl ;
+    fcntl( iSerialFD, F_SETFL, FNDELAY ); // disable blocking
+    clearLine( iSerialFD ); // clear line of all input
+    fcntl( iSerialFD, F_SETFL, 0 ); // enable blocking
+    if (args.debug) std::cerr << "DEBUG: ...done." << std::endl ;
+
+///*
+    if (args.debug) std::cerr << "DEBUG: ...updating term settings." << std::endl ;
+    // close serial line and open again with different options
+    close( iSerialFD );
+    iSerialFD = open( args.device_name.c_str(), (O_RDWR | O_NOCTTY) );
+    // set for reading with readLine()
+    stTermio.c_cc[  VMIN ] = 1;
+    stTermio.c_cc[ VTIME ] = 0;
+    iStatus = ioctl( iSerialFD, TCSETA, &stTermio );
+    if ( iStatus < 0 ) {
+        perror( "[Error] ioctl (TCSETA) failed..." );
+        exit(1);
+    }
+    if (args.debug) std::cerr << "DEBUG: ...done." << std::endl ;
+//*/
+
+//*/
+
     // check if we are really talking to TIC......
     // not to reset all the equipment (like Cesium clock)
-    //tcflush( iSerialFD, TCIFLUSH );
+    //BADLINE iStatus = tcsetattr( iSerialFD, TCSAFLUSH, &stTermio );
+    tcflush( iSerialFD, TCIFLUSH );
+    if (args.debug) std::cerr << "DEBUG: ...starting query..." << std::endl ;
     writeLine(iSerialFD, "*IDN?\n" );
     if (readLine(iSerialFD,output))
         exit(1);
