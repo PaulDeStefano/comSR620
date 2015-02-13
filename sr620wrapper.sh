@@ -30,7 +30,6 @@ then
     else
 	cd $sr620path
 	screen -d -m -S sr620screen bash -c "./sr620 -d ${defaultDev} -l NU1 -a OT -b PT_Sept -t LSUTIC --calibrate --rotate 2>&1 | tee -a sr620.log"
-	#screen -d -m -S sr620screen ./sr620 -d "${defaultDev}" -l Kenkyuto -a OT -b PT_Sept -t LSUTIC --rotate | tee -a "sr620.log"
 	exit $?
     fi
 fi
@@ -61,5 +60,4 @@ then
     done
 fi
 ./sr620 $arguments | tee -a "sr620.log"
-#./sr620 $arguments
 exit $?
