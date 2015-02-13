@@ -1,8 +1,30 @@
 #!/bin/bash
 
 arguments=$@
+siteName=default
 sr620path="/DATA/LSU-TIC/"
 defaultDev=/dev/ttyUSB0
+
+if [[ ${siteName} = default ]]
+then
+  if [[ -z ${HOSTNAME} ]]
+  then
+    echo "ERROR: cannot determine hostname for myself."
+    exit 1
+  elif [[ "${HOSTNAME}" =~ sukgpspt ]]
+  then
+    siteName=Kenkuto
+  elif [[ "${HOSTNAME}" =~ gpsptnu1 ]]
+  then
+    siteName=NU1
+  else
+    siteName="${HOSTNAME}"
+    echo "WARNING: using fallback siteName=${siteName}"
+  fi
+fi
+
+#echo "DEBUG: using siteName=${siteName}" #DEBUG
+#exit 2 #DEBUG
 
 PID=$(pgrep -x sr620)
 
@@ -29,7 +51,7 @@ then
 	exit 1
     else
 	cd $sr620path
-	screen -d -m -S sr620screen bash -c "./sr620 -d ${defaultDev} -l NU1 -a OT -b PT_Sept -t LSUTIC --calibrate --rotate 2>&1 | tee -a sr620.log"
+	screen -d -m -S sr620screen bash -c "./sr620 -d ${defaultDev} -l "${siteName}" -a OT -b PT_Sept -t LSUTIC --calibrate --rotate 2>&1 | tee -a sr620.log"
 	exit $?
     fi
 fi
